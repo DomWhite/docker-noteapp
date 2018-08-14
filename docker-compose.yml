@@ -1,0 +1,31 @@
+# Initial build command for local
+# docker-compose run app rails new . --force --database=mysql --skip-bundle
+
+version: '2'
+services:
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: noteapp
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306" # Map local port from 3306 to 3307 to prevent clashing in local dev
+  app:
+    build: . # There is no image for Rails so we use . for the current directory and build from the gemfile
+    command: bundle exec rails s -p 3000 -b '0.0.0.0' # The rails start server command on port 3000 and then bind it to the ip 0.0.0.0
+    volumes: 
+      - ".:/noteapp"
+    ports:
+      - "3001:3000" # Map local port from 3000 to 3001 to prevent clashing in local dev
+    depends_on:
+      - db # The Rails app has a dependency on the db service so make sure it starts with Rails
+    links:
+      - db # Connect to the db using the parametres set out in the db block
+    environment:
+      DB_USER: root
+      DB_NAME:  noteapp
+      DB_PASSWORD: password
+      DB_HOST: db
